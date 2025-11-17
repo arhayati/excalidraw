@@ -393,13 +393,34 @@ export const restoreElement = (
         ...getSizeFromPoints(points),
       });
     case "arrow": {
-      const { startArrowhead = null, endArrowhead = "arrow" } = element;
+      const {
+        startArrowhead = null,
+        endArrowhead = "arrow",
+        angle = 0,
+      } = element;
       const x: number | undefined = element.x;
       const y: number | undefined = element.y;
-      const points: readonly LocalPoint[] | undefined = // migrate old arrow model to new one
+      let points: readonly LocalPoint[] | undefined = // migrate old arrow model to new one
         !Array.isArray(element.points) || element.points.length < 2
           ? [pointFrom(0, 0), pointFrom(element.width, element.height)]
           : element.points;
+
+      if (angle !== 0) {
+        points = LinearElementEditor.getPointsGlobalCoordinates(
+          element,
+          elementsMap,
+        ).map((point) =>
+          LinearElementEditor.pointFromAbsoluteCoords(
+            element as ExcalidrawArrowElement,
+            pointRotateRads(
+              point,
+              elementCenterPoint(element, elementsMap),
+              angle,
+            ),
+            elementsMap,
+          ),
+        );
+      }
 
       const base = {
         type: element.type,
@@ -422,6 +443,7 @@ export const restoreElement = (
         y,
         elbowed: (element as ExcalidrawArrowElement).elbowed,
         ...getSizeFromPoints(points),
+        angle: 0 as Radians,
       };
 
       // TODO: Separate arrow from linear element
