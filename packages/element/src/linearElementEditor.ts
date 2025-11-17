@@ -1569,7 +1569,9 @@ export class LinearElementEditor {
     const updatedOriginPoint =
       pointUpdates.get(0)?.point ?? pointFrom<LocalPoint>(0, 0);
 
-    const [offsetX, offsetY] = updatedOriginPoint;
+    // Handle non-normalized points
+    const offsetX = element.points[0][0] - updatedOriginPoint[0];
+    const offsetY = element.points[0][1] - updatedOriginPoint[1];
 
     const nextPoints = isElbowArrow(element)
       ? [
@@ -1586,7 +1588,14 @@ export class LinearElementEditor {
             idx !== points.length - 1 &&
             !pointUpdates.has(idx)
           ) {
-            return pointFrom<LocalPoint>(current[0], current[1]);
+            return current;
+          }
+
+          // Since we're subtracting the offset coming from the first point
+          // from all other points, we need to skip the first point here to avoid
+          // double-subtracting the offset.
+          if (idx === 0) {
+            return pointFrom<LocalPoint>(0, 0);
           }
 
           return pointFrom<LocalPoint>(
