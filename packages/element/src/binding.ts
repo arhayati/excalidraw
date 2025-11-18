@@ -4,6 +4,7 @@ import {
   getFeatureFlag,
   invariant,
   isTransparent,
+  randomId,
 } from "@excalidraw/common";
 
 import {
@@ -1200,16 +1201,12 @@ export const bindPointToSnapToElementOutline = (
   startOrEnd: "start" | "end",
   elementsMap: ElementsMap,
   customIntersector?: LineSegment<GlobalPoint>,
-  ignoreFrameCutouts?: boolean,
 ): GlobalPoint => {
   const aabb = aabbForElement(bindableElement, elementsMap);
-  const localPoint =
-    arrowElement.points[
-      startOrEnd === "start" ? 0 : arrowElement.points.length - 1
-    ];
-  const point = pointFrom<GlobalPoint>(
-    arrowElement.x + localPoint[0],
-    arrowElement.y + localPoint[1],
+  const point = LinearElementEditor.getPointAtIndexGlobalCoordinates(
+    arrowElement,
+    startOrEnd === "start" ? 0 : -1,
+    elementsMap,
   );
 
   if (arrowElement.points.length < 2) {
@@ -1222,17 +1219,11 @@ export const bindPointToSnapToElementOutline = (
     : point;
   const elbowed = isElbowArrow(arrowElement);
   const center = getCenterForBounds(aabb);
-  const adjacentPointIdx =
-    startOrEnd === "start" ? 1 : arrowElement.points.length - 2;
-  const adjacentPoint = pointRotateRads(
-    pointFrom<GlobalPoint>(
-      arrowElement.x + arrowElement.points[adjacentPointIdx][0],
-      arrowElement.y + arrowElement.points[adjacentPointIdx][1],
-    ),
-    center,
-    arrowElement.angle ?? 0,
+  const adjacentPoint = LinearElementEditor.getPointAtIndexGlobalCoordinates(
+    arrowElement,
+    startOrEnd === "start" ? 1 : -2,
+    elementsMap,
   );
-
   const bindingGap = getBindingGap(bindableElement, arrowElement);
 
   let intersection: GlobalPoint | null = null;
@@ -1624,7 +1615,6 @@ export const updateBoundPoint = (
   }
 
   const isNested = (arrowTooShort || isOverlapping) && isLargerThanOther;
-
   const maybeOutlineGlobal =
     binding.mode === "orbit" && bindableElement
       ? isNested
@@ -1632,6 +1622,7 @@ export const updateBoundPoint = (
         : bindPointToSnapToElementOutline(
             {
               ...arrow,
+              id: randomId(),
               x: pointIndex === 0 ? global[0] : arrow.x,
               y: pointIndex === 0 ? global[1] : arrow.y,
               points:

@@ -22,6 +22,9 @@ import {
   invariant,
   isShallowEqual,
   getFeatureFlag,
+  debugDrawPoint,
+  debugDrawLine,
+  randomId,
 } from "@excalidraw/common";
 
 import {
@@ -51,6 +54,7 @@ import {
   updateBoundPoint,
 } from "./binding";
 import {
+  elementCenterPoint,
   getElementAbsoluteCoords,
   getElementPointsCoords,
   getMinMaxXYFromCurvePathOps,
@@ -2275,9 +2279,12 @@ const pointDraggingUpdates = (
         element.points[element.points.length - 1][1] + deltaY,
       )
     : element.points[element.points.length - 1];
-
+  debugDrawPoint(pointFrom<GlobalPoint>(element.x, element.y));
   const nextArrow = {
     ...element,
+    id: randomId(),
+    x: 0,
+    y: 0,
     points: [
       offsetStartLocalPoint,
       ...element.points

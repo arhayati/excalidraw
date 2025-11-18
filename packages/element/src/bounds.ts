@@ -1276,7 +1276,15 @@ export const elementCenterPoint = (
   xOffset: number = 0,
   yOffset: number = 0,
 ) => {
-  const [x, y] = getCenterForBounds(getElementBounds(element, elementsMap));
+  if (isLinearElement(element)) {
+    const [x1, y1, x2, y2] = getElementAbsoluteCoords(element, elementsMap);
+    const [x, y] = pointFrom<GlobalPoint>((x1 + x2) / 2, (y1 + y2) / 2);
+
+    return pointFrom<GlobalPoint>(x + xOffset, y + yOffset);
+  }
+
+  const [x1, y1, x2, y2] = getElementAbsoluteCoords(element, elementsMap);
+  const [x, y] = pointFrom<GlobalPoint>((x1 + x2) / 2, (y1 + y2) / 2);
 
   return pointFrom<GlobalPoint>(x + xOffset, y + yOffset);
 };
