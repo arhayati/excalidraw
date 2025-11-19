@@ -22,9 +22,6 @@ import {
   invariant,
   isShallowEqual,
   getFeatureFlag,
-  debugDrawPoint,
-  debugDrawLine,
-  randomId,
 } from "@excalidraw/common";
 
 import {
@@ -54,7 +51,6 @@ import {
   updateBoundPoint,
 } from "./binding";
 import {
-  elementCenterPoint,
   getElementAbsoluteCoords,
   getElementPointsCoords,
   getMinMaxXYFromCurvePathOps,
@@ -1572,10 +1568,8 @@ export class LinearElementEditor {
 
     const updatedOriginPoint =
       pointUpdates.get(0)?.point ?? pointFrom<LocalPoint>(0, 0);
-
-    // Handle non-normalized points
-    const offsetX = element.points[0][0] - updatedOriginPoint[0];
-    const offsetY = element.points[0][1] - updatedOriginPoint[1];
+    const offsetX = updatedOriginPoint[0];
+    const offsetY = updatedOriginPoint[1];
 
     const nextPoints = isElbowArrow(element)
       ? [
@@ -1593,13 +1587,6 @@ export class LinearElementEditor {
             !pointUpdates.has(idx)
           ) {
             return current;
-          }
-
-          // Since we're subtracting the offset coming from the first point
-          // from all other points, we need to skip the first point here to avoid
-          // double-subtracting the offset.
-          if (idx === 0) {
-            return pointFrom<LocalPoint>(0, 0);
           }
 
           return pointFrom<LocalPoint>(
@@ -2256,43 +2243,28 @@ const pointDraggingUpdates = (
   }
 
   // Simulate the updated arrow for the bind point calculation
-  const originalStartGlobalPoint =
-    LinearElementEditor.getPointAtIndexGlobalCoordinates(
-      element,
-      0,
-      elementsMap,
-    );
-  const offsetStartGlobalPoint = startIsDragged
-    ? pointFrom<GlobalPoint>(
-        originalStartGlobalPoint[0] + deltaX,
-        originalStartGlobalPoint[1] + deltaY,
+  const offsetStartLocalPoint = startIsDragged
+    ? pointFrom<LocalPoint>(
+        element.points[0][0] + deltaX,
+        element.points[0][1] + deltaY,
       )
-    : originalStartGlobalPoint;
-  const offsetStartLocalPoint = LinearElementEditor.pointFromAbsoluteCoords(
-    element,
-    offsetStartGlobalPoint,
-    elementsMap,
-  );
+    : element.points[0];
   const offsetEndLocalPoint = endIsDragged
     ? pointFrom<LocalPoint>(
         element.points[element.points.length - 1][0] + deltaX,
         element.points[element.points.length - 1][1] + deltaY,
       )
     : element.points[element.points.length - 1];
-  debugDrawPoint(pointFrom<GlobalPoint>(element.x, element.y));
   const nextArrow = {
     ...element,
-    id: randomId(),
-    x: 0,
-    y: 0,
     points: [
       offsetStartLocalPoint,
       ...element.points
         .slice(1, -1)
         .map((p) =>
           pointFrom<LocalPoint>(
-            p[0] + element.x - offsetStartGlobalPoint[0],
-            p[1] + element.y - offsetStartGlobalPoint[1],
+            p[0] - offsetStartLocalPoint[0],
+            p[1] - offsetStartLocalPoint[1],
           ),
         ),
       offsetEndLocalPoint,
@@ -2419,9 +2391,15 @@ const pointDraggingUpdates = (
         return [
           idx,
           idx === 0
-            ? { point: startLocalPoint, isDragging: true }
+            ? {
+                point: startLocalPoint,
+                isDragging: true,
+              }
             : idx === element.points.length - 1
-            ? { point: endLocalPoint, isDragging: true }
+            ? {
+                point: endLocalPoint,
+                isDragging: true,
+              }
             : naiveDraggingPoints.get(idx)!,
         ];
       }),

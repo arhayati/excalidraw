@@ -1552,7 +1552,6 @@ export const updateBoundPoint = (
   );
   const pointIndex =
     startOrEnd === "startBinding" ? 0 : arrow.points.length - 1;
-
   const otherBinding =
     startOrEnd === "startBinding" ? arrow.endBinding : arrow.startBinding;
   const otherBindableElement =
@@ -1615,16 +1614,23 @@ export const updateBoundPoint = (
   }
 
   const isNested = (arrowTooShort || isOverlapping) && isLargerThanOther;
+
+  const rotatedGlobal = pointRotateRads(
+    global,
+    elementCenterPoint(arrow, elementsMap),
+    -arrow.angle as Radians,
+  );
+
   const maybeOutlineGlobal =
     binding.mode === "orbit" && bindableElement
       ? isNested
-        ? global
+        ? rotatedGlobal
         : bindPointToSnapToElementOutline(
             {
               ...arrow,
               id: randomId(),
-              x: pointIndex === 0 ? global[0] : arrow.x,
-              y: pointIndex === 0 ? global[1] : arrow.y,
+              x: pointIndex === 0 ? rotatedGlobal[0] : arrow.x,
+              y: pointIndex === 0 ? rotatedGlobal[1] : arrow.y,
               points:
                 pointIndex === 0
                   ? [
@@ -1633,16 +1639,16 @@ export const updateBoundPoint = (
                         .slice(1)
                         .map((p) =>
                           pointFrom<LocalPoint>(
-                            p[0] - (global[0] - arrow.x),
-                            p[1] - (global[1] - arrow.y),
+                            p[0] - (rotatedGlobal[0] - arrow.x),
+                            p[1] - (rotatedGlobal[1] - arrow.y),
                           ),
                         ),
                     ]
                   : [
                       ...arrow.points.slice(0, -1),
                       pointFrom<LocalPoint>(
-                        global[0] - arrow.x,
-                        global[1] - arrow.y,
+                        rotatedGlobal[0] - arrow.x,
+                        rotatedGlobal[1] - arrow.y,
                       ),
                     ],
             },
