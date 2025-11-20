@@ -1,16 +1,20 @@
-# netlify.toml
-
 [build]
-  base = "excalidraw-app"                        
-  publish = "dist/client"                         
-  command = "yarn set version classic && yarn install && yarn workspace excalidraw-app build"
+  command = "npm run build"
+  publish = "dist"
 
-[build.environment]
-  NODE_VERSION = "20"           # Ensure Node 20
-  YARN_VERSION = "1"            # Use Yarn Classic
+[dev]
+  command = "npm run dev"
+  port = 8888
 
-# Redirects / SPA fallback (Excalidraw is a single-page app)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
